@@ -7,37 +7,42 @@ configs:
     create: true
     plugins:
       kustomize-build-with-helm:
-        version: v1.0
-        # Discover phase - tells ArgoCD when to use this plugin
-        discover:
-          find:
+        apiVersion: argoproj.io/v1alpha1
+        kind: ConfigManagementPlugin
+        metadata:
+          name: kustomize-build-with-helm
+        spec:
+          version: v1.0
+          # Discover phase - tells ArgoCD when to use this plugin
+          discover:
+            find:
+              command: [sh, -c]
+              args:
+                - |
+                  if [ -f "kustomization.yaml" ] || [ -f "kustomization.yml" ]; then
+                    echo "kustomization file found"
+                  fi
+          # Init phase - prepare Helm dependencies
+          init:
+            command: [sh, -c]
+            args:
+              - |
+                if [ -f "Chart.yaml" ] || [ -f "requirements.yaml" ]; then
+                  echo "Found Helm chart, building dependencies..."
+                  helm dependency build
+                fi
+          # Generate phase - create final manifests
+          generate:
             command: [sh, -c]
             args:
               - |
                 if [ -f "kustomization.yaml" ] || [ -f "kustomization.yml" ]; then
-                  echo "kustomization file found"
+                  echo "Running kustomize build with helm support..."
+                  kustomize build --enable-helm .
+                else
+                  echo "ERROR: No kustomization file found"
+                  exit 1
                 fi
-        # Init phase - prepare Helm dependencies
-        init:
-          command: [sh, -c]
-          args:
-            - |
-              if [ -f "Chart.yaml" ] || [ -f "requirements.yaml" ]; then
-                echo "Found Helm chart, building dependencies..."
-                helm dependency build
-              fi
-        # Generate phase - create final manifests
-        generate:
-          command: [sh, -c]
-          args:
-            - |
-              if [ -f "kustomization.yaml" ] || [ -f "kustomization.yml" ]; then
-                echo "Running kustomize build with helm support..."
-                kustomize build --enable-helm .
-              else
-                echo "ERROR: No kustomization file found"
-                exit 1
-              fi
   
   params:
     server.insecure: true
@@ -51,28 +56,28 @@ controller:
   resources:
     requests:
       cpu: 50m
-      memory: 256Mi
+      memory: 64Mi
     limits:
-      cpu: 2000m
-      memory: 1Gi
+      cpu: 500m
+      memory: 256Mi
 
 dex:
   resources:
     requests:
       cpu: 20m
-      memory: 64Mi
+      memory: 32Mi
     limits:
-      cpu: 1000m
-      memory: 256Mi
+      cpu: 200m
+      memory: 64Mi
 
 redis:
   resources:
     requests:
-      cpu: 100m
-      memory: 64Mi
+      cpu: 50m
+      memory: 32Mi
     limits:
-      cpu: 2000m
-      memory: 128Mi
+      cpu: 200m
+      memory: 64Mi
 
 server:
   resources:
@@ -80,8 +85,8 @@ server:
       cpu: 50m
       memory: 64Mi
     limits:
-      cpu: 4000m
-      memory: 256Mi
+      cpu: 500m
+      memory: 128Mi
 
 repoServer:
   containerSecurityContext:
@@ -96,11 +101,11 @@ repoServer:
   
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 50m
+      memory: 64Mi
     limits:
-      cpu: 4000m
-      memory: 1024Mi
+      cpu: 500m
+      memory: 256Mi
   
   extraContainers:
     - name: kustomize-build-with-helm
@@ -121,7 +126,7 @@ repoServer:
           mountPath: /home/argocd/cmp-server/plugins
         - name: cmp-kustomize-build-with-helm
           mountPath: /home/argocd/cmp-server/config/plugin.yaml
-          subPath: kustomize-build-with-helm.yaml
+          subPath: kustomize-build-with-helm
         - mountPath: /tmp
           name: cmp-tmp
 
@@ -129,17 +134,17 @@ applicationSet:
   resources:
     requests:
       cpu: 50m
-      memory: 64Mi
+      memory: 32Mi
     limits:
-      cpu: 1000m
-      memory: 512Mi
+      cpu: 200m
+      memory: 128Mi
 
 notifications:
   enabled: false
   resources:
     requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
       cpu: 100m
       memory: 64Mi
-    limits:
-      cpu: 1000m
-      memory: 128Mi
