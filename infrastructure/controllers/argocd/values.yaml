@@ -50,11 +50,11 @@ crds:
 controller:
   resources:
     requests:
-      cpu: 100m
-      memory: 700Mi
+      cpu: 50m
+      memory: 256Mi
     limits:
-      cpu: 4000m
-      memory: 2Gi
+      cpu: 2000m
+      memory: 1Gi
 
 dex:
   resources:
