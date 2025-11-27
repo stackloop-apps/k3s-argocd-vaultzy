@@ -98,13 +98,11 @@ You need your **Private IP** for the K3s node setup.
 hostname -I | awk '{print $1}'
 ```
 
-### ⚡ Run the Installation
-Copy and paste this block into your terminal. **Replace the token with a secure password!**
-
+### 2. K3s Installation
 ```bash
-# === CONFIGURATION ===
-export SETUP_NODEIP=$(hostname -I | awk '{print $1}')  # Automatically gets your Private IP
-export SETUP_CLUSTERTOKEN="replace-this-with-a-secure-password" 
+# Customize these values!
+export SETUP_NODEIP=172.31.7.100  # Your AWS Private IP
+export SETUP_CLUSTERTOKEN=randomtokensecret12343  # Strong token
 # =====================
 
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.33.3+k3s1" \
@@ -234,6 +232,27 @@ You can watch the progress:
 ```bash
 kubectl get applications -n argocd -w
 ```
+
+---
+
+## Step 6: Configure DNS 🌐
+
+Since you have a **Wildcard CNAME** record (`*.basilaslam.com`) pointing to your tunnel, **you do not need to add individual records!** 🎉
+
+The `cloudflared` tunnel is configured to send all traffic for `*.basilaslam.com` to the internal Cilium Gateway, which then routes it to the correct app based on the hostname.
+
+**Verify your Wildcard Record:**
+1.  Go to **Cloudflare Dashboard** > **DNS**.
+2.  Ensure you have:
+
+| Type | Name | Target | Proxy Status |
+| :--- | :--- | :--- | :--- |
+| CNAME | `*` | `<your-tunnel-id>.cfargotunnel.com` | Proxied (Orange Cloud) |
+
+That's it! You can immediately access:
+-   **Argo CD**: `https://argocd.basilaslam.com`
+-   **Backend**: `https://backend.basilaslam.com`
+-   **Frontend**: `https://frontend.basilaslam.com`
 
 ---
 

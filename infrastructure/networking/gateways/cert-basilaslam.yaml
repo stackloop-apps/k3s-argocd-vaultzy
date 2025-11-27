@@ -1,0 +1,25 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cert-basilaslam
+  namespace: gateway
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-options: Validate=true
+    argocd.argoproj.io/compare-options: ServerSideDiff=true
+spec:
+  dnsNames:
+    - "*.basilaslam.com"
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: cloudflare-dns
+  secretName: cert-basilaslam
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  revisionHistoryLimit: 1
+  usages:
+    - digital signature
+    - key encipherment

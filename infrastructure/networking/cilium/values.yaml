@@ -6,6 +6,9 @@ k8sServicePort: "6443"
 
 kubeProxyReplacement: "strict"
 
+gatewayAPI:
+  enabled: true
+
 ipam:
   mode: "kubernetes"
 
