@@ -6,7 +6,7 @@ configs:
   cmp:
     create: true
     plugins:
-      kustomize-build-with-helm:
+      plugin.yaml:
         apiVersion: argoproj.io/v1alpha1
         kind: ConfigManagementPlugin
         metadata:
@@ -125,8 +125,8 @@ repoServer:
         - name: plugins
           mountPath: /home/argocd/cmp-server/plugins
         - name: cmp-kustomize-build-with-helm
-          mountPath: /home/argocd/cmp-server/config/plugin.yaml
-          subPath: kustomize-build-with-helm
+          mountPath: /home/argocd/cmp-server/config/
+          # subPath removed to avoid "is a directory" error
         - mountPath: /tmp
           name: cmp-tmp
 
