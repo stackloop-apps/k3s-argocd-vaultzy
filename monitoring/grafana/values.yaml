@@ -1,0 +1,33 @@
+grafana:
+  adminPassword: "admin"
+  persistence:
+    enabled: false
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+  dashboards:
+    default:
+      kubernetes-cluster:
+        url: https://grafana.com/api/dashboards/315/revisions/3/download
+        datasource: Prometheus
+      node-exporter:
+        url: https://grafana.com/api/dashboards/1860/revisions/37/download
+        datasource: Prometheus

@@ -1,0 +1,7 @@
+kubernetes-dashboard:
+  metrics-server:
+    enabled: true
+  ingress:
+    enabled: true
+    hosts:
+      - localhost

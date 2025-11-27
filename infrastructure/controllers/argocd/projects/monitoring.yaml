@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  description: Monitoring and observability components
+  sourceRepos:
+    - https://github.com/stackloop-apps/k3s-argocd-vaultzy.git
+  destinations:
+    - namespace: "*"
+      server: "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  roles:
+    - name: admin
+      description: Admin role for monitoring project
+      policies:
+        - p, proj:monitoring:admin, applications, *, monitoring/*, allow

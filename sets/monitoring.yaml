@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - git:
+      repoURL: https://github.com/stackloop-apps/k3s-argocd-vaultzy.git
+      revision: HEAD
+      directories:
+      - path: monitoring/*
+  template:
+    metadata:
+      name: '{{.path.basename}}'
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+    spec:
+      project: monitoring
+      source:
+        repoURL: https://github.com/stackloop-apps/k3s-argocd-vaultzy.git
+        targetRevision: HEAD
+        path: '{{.path.path}}'
+        helm:
+          valueFiles:
+          - values.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: monitoring
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

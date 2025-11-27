@@ -1,13 +1,12 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  labels:
-    app: cloudflared
   name: cloudflared
   namespace: cloudflared
-  annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    app: cloudflared
 spec:
+  replicas: 2
   selector:
     matchLabels:
       app: cloudflared
@@ -17,39 +16,40 @@ spec:
         app: cloudflared
     spec:
       containers:
-        - name: cloudflared
-          image: cloudflare/cloudflared:2025.1.0 # renovate: docker=cloudflare/cloudflared
-          imagePullPolicy: IfNotPresent
-          args:
-            - tunnel
-            - --config
-            - /etc/cloudflared/config/config.yaml
-            - run
-          livenessProbe:
-            httpGet:
-              path: /ready
-              port: 2000
-            initialDelaySeconds: 60
-            failureThreshold: 5
-            periodSeconds: 10
-          resources:
-            requests:
-              cpu: 100m
-              memory: 64Mi
-            limits:
-              memory: 512Mi
-          volumeMounts:
-            - name: config
-              mountPath: /etc/cloudflared/config/config.yaml
-              subPath: config.yaml
-            - name: credentials
-              mountPath: /etc/cloudflared/credentials
-              readOnly: true
-      restartPolicy: Always
-      volumes:
+      - name: cloudflared
+        image: cloudflare/cloudflared:latest
+        args:
+        - tunnel
+        - --config
+        - /etc/cloudflared/config.yaml
+        - run
+        volumeMounts:
         - name: config
-          configMap:
-            name: config
-        - name: credentials
-          secret:
-            secretName: tunnel-credentials
+          mountPath: /etc/cloudflared
+          readOnly: true
+        - name: creds
+          mountPath: /etc/cloudflared/creds
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: cloudflared-config
+      - name: creds
+        secret:
+          secretName: cloudflared-creds
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflared-config
+  namespace: cloudflared
+data:
+  config.yaml: |
+    tunnel: <tunnel-id>
+    credentials-file: /etc/cloudflared/creds/credentials.json
+    metrics: 0.0.0.0:2000
+    no-autoupdate: true
+    ingress:
+    - hostname: example.com
+      service: http://nginx:80
+    - service: http_status:404

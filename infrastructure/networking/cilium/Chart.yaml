@@ -1,0 +1,9 @@
+apiVersion: v2
+kind: Chart
+metadata:
+  name: cilium-wrapper
+  version: 1.0.0
+dependencies:
+  - name: cilium
+    version: 1.14.2
+    repository: https://helm.cilium.io/
