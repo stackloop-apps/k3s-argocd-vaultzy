@@ -9,7 +9,7 @@ spec:
   generators:
   - git:
       repoURL: https://github.com/stackloop-apps/k3s-argocd-vaultzy.git
-      revision: HEAD
+      revision: main
       directories:
       - path: apps/*
   template:
@@ -21,7 +21,7 @@ spec:
       project: applications
       source:
         repoURL: https://github.com/stackloop-apps/k3s-argocd-vaultzy.git
-        targetRevision: HEAD
+        targetRevision: main
         path: '{{.path.path}}'
       destination:
         server: https://kubernetes.default.svc

@@ -102,11 +102,13 @@ hostname -I | awk '{print $1}'
 ```bash
 # Customize these values!
 export SETUP_NODEIP=172.31.7.100  # Your AWS Private IP
+export SETUP_PUBLICIP=65.1.210.12 # Your AWS Public IP
 export SETUP_CLUSTERTOKEN=randomtokensecret12343  # Strong token
 # =====================
 
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.33.3+k3s1" \
   INSTALL_K3S_EXEC="--node-ip $SETUP_NODEIP \
+  --tls-san $SETUP_PUBLICIP \
   --disable=flannel,local-storage,metrics-server,servicelb,traefik \
   --flannel-backend='none' \
   --disable-network-policy \
@@ -122,6 +124,24 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config && chmod 600 $HOME/.kube/config
 # Verify it works (Status should be 'NotReady' because we haven't installed networking yet)
 kubectl get nodes
 ```
+
+### 🔌 Optional: Access from Local Machine
+Want to control the cluster from your laptop?
+
+1.  **Copy the Kubeconfig**:
+    ```bash
+    # Run this on your LOCAL machine
+    scp ubuntu@65.1.210.12:~/.kube/config ~/.kube/config-k3s
+    ```
+2.  **Update the Server Address**:
+    -   Open `~/.kube/config-k3s` in a text editor.
+    -   Replace `https://127.0.0.1:6443` with `https://65.1.210.12:6443`.
+3.  **Use it**:
+    ```bash
+    export KUBECONFIG=~/.kube/config-k3s
+    kubectl get nodes
+    ```
+> **⚠️ Important**: You must ensure **Port 6443** (TCP) is open in your AWS Security Group (Inbound Rules) for your IP address.
 
 ---
 
@@ -214,9 +234,35 @@ rm $HOME/.cloudflared/*.json
 
 ## Step 5: Deploy Everything (The Magic Step)
 
-Now that the foundation is laid, we tell Argo CD to take over. It will read this Git repository and deploy everything else automatically.
+Now that the foundation is laid, we need to **bootstrap** Argo CD so it can take over.
+
+### 1. Bootstrap Argo CD
+Since Argo CD manages itself, we need to install it manually first (the "Chicken and Egg" problem).
 
 ```bash
+# 1. Create the namespace
+kubectl create namespace argocd
+
+# 2. Add the Argo Helm repo
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+
+# 3. Install Argo CD (Bootstrap)
+helm install argocd argo/argo-cd -n argocd \
+  -f infrastructure/controllers/argocd/values.yaml \
+  --version 7.3.6
+
+# 4. Wait for it to be ready
+kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
+```
+
+### 2. Apply the GitOps Config
+Now that Argo CD is running, we can tell it to manage the whole cluster.
+
+```bash
+# Apply the Projects (Security Boundaries)
+kubectl apply -f infrastructure/controllers/argocd/projects/
+
 # Apply the ApplicationSets
 kubectl apply -f sets/infrastructure.yaml
 kubectl apply -f sets/monitoring.yaml
