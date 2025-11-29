@@ -3,9 +3,8 @@ kind: Kustomization
 
 resources:
   - https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.yaml
+  - cluster-issuer.yaml
 
 # Cloudflare DNS Solver ClusterIssuer
 # Note: You must create a secret named 'cloudflare-api-token-secret' in the cert-manager namespace
 # containing your Cloudflare API token in the key 'api-token'.
-components:
-  - cluster-issuer.yaml
